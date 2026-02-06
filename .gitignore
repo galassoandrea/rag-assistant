@@ -7,3 +7,6 @@ data/
 chroma_db/
 *.pdf
 .DS_Store
+chainlit.md
+Dockerfile
+.chainlit/

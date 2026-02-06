@@ -30,7 +30,7 @@ The RAG assistant works in a series of steps:
 
 ## 🔎 Usage instructions
 
-To test the system you can use the following queries:
+You can test the application at the link https://huggingface.co/spaces/andreagalasso99/financial-rag using the following queries:
 
 - what is the purpose of a job training ?
 
