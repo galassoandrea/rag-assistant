@@ -1,26 +1,25 @@
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_pinecone import PineconeVectorStore
+from langchain_groq import ChatGroq
+from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
 from langchain.agents import create_agent
 from langchain.agents.middleware import dynamic_prompt, ModelRequest
 from dotenv import load_dotenv
-import os
 
 def retrieve_relevant_docs(query: str):
 
-    # Load the embedding model and the vector store
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004",
-        google_api_key=os.getenv("GOOGLE_API_KEY")
+    # Initialize embedding model from Hugging Face
+    embeddings = HuggingFaceEndpointEmbeddings(
+        repo_id="BAAI/bge-m3",
     )
     
+    # Initialize Pinecone vector store
     vectorstore = PineconeVectorStore(
         index_name="rag-assistant-project",
-        pinecone_api_key=os.getenv("PINECONE_API_KEY"),
         embedding=embeddings
     )
 
     # Retrieve relevant documents using similarity search
-    retrieved_docs = vectorstore.similarity_search(query, k=3)
+    retrieved_docs = vectorstore.similarity_search(query, k=5)
     return retrieved_docs
 
 @dynamic_prompt
@@ -31,9 +30,10 @@ def prompt_with_context(request: ModelRequest) -> str:
 
     # Retrieve relevant documents, join them and inject them into a prompt
     retrieved_docs = retrieve_relevant_docs(last_query)
+    print(retrieved_docs)
     docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
     system_message = (
-        "You are a helpful assistant. Use the following context to answer the next question:"
+        "You are a helpful assistant. Use the following context to provide an appropriate answer for the next query:"
         f"\n\n{docs_content}"
     )
 
@@ -41,9 +41,10 @@ def prompt_with_context(request: ModelRequest) -> str:
 
 
 def ask_question(query):
-    model = ChatGoogleGenerativeAI(model="gemini-3-flash-preview",
-                                   google_api_key=os.getenv("GOOGLE_API_KEY"),
-                                   temperature=0)
+    model = ChatGroq(
+        model_name="llama-3.3-70b-versatile",
+        temperature=0
+    )
     agent = create_agent(model, tools=[], middleware=[prompt_with_context])
     for step in agent.stream(
         {"messages": [{"role": "user", "content": query}]},
@@ -54,4 +55,4 @@ def ask_question(query):
 
 if __name__ == "__main__":
     load_dotenv()
-    ask_question("What is Tesla's approach to autonomous driving?")
+    ask_question("canadian importers trade in cny")
