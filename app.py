@@ -3,27 +3,23 @@ from langchain_groq import ChatGroq
 from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
 from langchain.agents import create_agent
 from langchain.agents.middleware import dynamic_prompt, ModelRequest
-from dotenv import load_dotenv
+from langchain_community.retrievers import BM25Retriever
+from scripts.EnsembleRetriever import EnsembleRetriever
+from scripts.utils import load_and_preprocess_docs
 import chainlit as cl
 
-# Initialize embedding model from Hugging Face
-embeddings = HuggingFaceEndpointEmbeddings(
-    repo_id="BAAI/bge-m3",
-)
-        
-# Initialize Pinecone vector store
-vectorstore = PineconeVectorStore(
-    index_name="rag-assistant-project",
-    embedding=embeddings
-)
-
 def retrieve_relevant_docs(query: str):
+    
     # Wrap the retrieval of relevant documents in a Chainlit Step, so it appears in the UI as 'Retrieving Context'.
     with cl.Step(name="Retrieving Context", type="tool") as step:
         step.input = query
 
-        # Retrieve relevant documents using similarity search
-        retrieved_docs = vectorstore.similarity_search(query, k=5)
+        # Create an ensemble retriever that combines BM25 and Vector search
+        retriever = EnsembleRetriever(
+            vector_retriever=cl.user_session.get("vectorstore").as_retriever(),
+            bm25_retriever=BM25Retriever.from_documents(cl.user_session.get("docs"))
+        )
+        retrieved_docs = retriever.invoke(query)
 
         # Show the retrieved text in the UI step output
         step.output = "\n\n".join([d.page_content[:200] + "..." for d in retrieved_docs])
@@ -49,14 +45,33 @@ def prompt_with_context(request: ModelRequest) -> str:
 
 @cl.on_chat_start
 async def start():
-    # Initialize the agent when the user opens the page.
+
+    """ Load the preprocessed documents and initialize the models and vector store
+      when the user starts a chat session. """
+    
+    # Load already preprocessed documents and store them in the user session
+    docs = load_and_preprocess_docs()
+    cl.user_session.set("docs", docs)
+
+    # Initialize embedding model from Hugging Face
+    embeddings = HuggingFaceEndpointEmbeddings(
+        repo_id="BAAI/bge-m3",
+    )
+            
+    # Initialize Pinecone vector store and store it in the user session
+    vectorstore = PineconeVectorStore(
+        index_name="rag-assistant-project",
+        embedding=embeddings
+    )
+    cl.user_session.set("vectorstore", vectorstore)
+
+    # Initialize the chat model
     model = ChatGroq(
         model_name="llama-3.3-70b-versatile",
         temperature=0
     )
     
-    # Create the agent and store it in the user session
-    # so we don't reload it every message
+    # Create the agent and store it in the user session, so we don't reload it every message
     agent = create_agent(model, tools=[], middleware=[prompt_with_context])
     cl.user_session.set("agent", agent)
     
@@ -65,7 +80,7 @@ async def start():
 
 @cl.on_message
 async def main(message: cl.Message):
-    # Runs on every user message.
+
     agent = cl.user_session.get("agent")
     
     # Create an empty message to stream the answer into
@@ -87,7 +102,3 @@ async def main(message: cl.Message):
     
     # Final update to ensure formatting is perfect
     await msg.update()
-
-#if __name__ == "__main__":
-#    load_dotenv()
-#    ask_question("canadian importers trade in cny")
