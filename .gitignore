@@ -10,3 +10,4 @@ chroma_db/
 chainlit.md
 Dockerfile
 .chainlit/
+.files

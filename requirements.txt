@@ -6,3 +6,4 @@ python-dotenv==1.0.1
 pinecone>=5.0.0
 langchain-groq>=0.2.0
 chainlit
+sentence-transformers
