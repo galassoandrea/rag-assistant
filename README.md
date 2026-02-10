@@ -16,13 +16,21 @@ The RAG assistant works in a series of steps:
    
 5. Perform a search through a LLM agent, which receives in input a query, embeds it, retrieves the most relevant documents stored in Pinecone and uses them as context to generate an appropriate answer for the query.
 
+Entering more into the details, the retrieval step consists in the following pipeline:
+
+1. Hybrid (Ensemble) Retrieval: the search for relevant documents is performed both semantically (vector search) and syntacticaly (document search). These 2 processes, produce separate scores for the set of documents, which are then combined and used to find the top 20 documents.
+
+2. Reranking: The 20 most relevant documents extracted by the previous step are reranked using a CrossEncoder, by computing a final relevance score for each couple query-document and the top 5 documents are returned and used to generate the answer to the query.
+
 ## 🛠️ Technical Details
 
 - To implement the RAG assistant, the main tools used are python and the langchain framework.
 
 - The dataset used is the BeIR/FiQA dataset from Hugging Face.
   
-- The model used to generate the documents' embeddings is BAAI/bge-m3, via Hugging Face Inference Endpoints.
+- For the Hybrid Retrieval pipeline, the model used to generate the documents' embeddings is BAAI/bge-m3, via Hugging Face Inference Endpoints, while BM25 is used for document search.
+
+- The CrossEncoder used for reranking is ms-marco-MiniLM-L-6-v2, which is very fast and lightweight.
 
 - The brain (LLM) used for answering the queries is llama-3.3-70b-versatile, via the Groq API.
   
