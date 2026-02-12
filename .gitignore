@@ -11,3 +11,4 @@ chainlit.md
 Dockerfile
 .chainlit/
 .files
+notebook.ipynb
