@@ -1,6 +1,6 @@
 from scripts.utils import load_and_preprocess_docs, normalize_results, reciprocal_rank_fusion
 import chainlit as cl
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from groq import Groq
 from dotenv import load_dotenv
@@ -42,7 +42,7 @@ async def start():
 
     # Initialize embedding and reranker models from Hugging Face and store them in the user session
     embedding_model = SentenceTransformer(EMBEDDING_MODEL)
-    reranker_model = SentenceTransformer(RERANKER_MODEL)
+    reranker_model = CrossEncoder(RERANKER_MODEL)
     cl.user_session.set("embedding_model", embedding_model)
     cl.user_session.set("reranker_model", reranker_model)
 
