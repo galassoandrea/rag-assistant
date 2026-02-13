@@ -48,7 +48,7 @@ git clone https://github.com/galassoandrea/rag-assistant.git
 
 ### Get you API keys for Groq and Pinecone
 
-store them in a .env file and create a Pinecone index (you can do it through the UI).
+Store them in a .env file and create a Pinecone index (you can do it through the UI).
 
 ### Install dependencies
 
@@ -58,13 +58,15 @@ pip install -r requirements.txt
 
 ### Automatically download the 10-K filings
 
+ You need to set a valid email address inside the script.
+
 ```sh 
-python scripts/download_data.py (you need to specify an email)
+python scripts/download_data.py
 ```
 
 ### Run the ingestion script
 
-Create the document embeddings and store them in your Pinecone index
+Create the document embeddings and store them in your Pinecone index.
 
 ```sh 
 python scripts/ingest.py
