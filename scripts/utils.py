@@ -125,5 +125,5 @@ def reciprocal_rank_fusion(list_a, list_b, k=60):
     # Sort by fused score
     reranked_results = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
     
-    # Return list of document objects
-    return [doc_map[doc_id] for doc_id, score in reranked_results]
+    # Return list of document objects for the top 20 results
+    return [doc_map[doc_id] for doc_id, score in reranked_results[:20]]

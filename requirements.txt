@@ -7,3 +7,4 @@ huggingface_hub
 beautifulsoup4
 rank_bm25
 groq
+sec-edgar-downloader

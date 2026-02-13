@@ -1,4 +1,4 @@
-from scripts.utils import load_and_preprocess_docs
+from scripts.utils import load_and_preprocess_docs, normalize_results, reciprocal_rank_fusion
 import chainlit as cl
 from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
@@ -6,7 +6,8 @@ from groq import Groq
 from dotenv import load_dotenv
 import os
 from pinecone import Pinecone
-from scripts.utils import normalize_results, reciprocal_rank_fusion
+import torch
+import gc
 
 load_dotenv()
 
@@ -52,7 +53,7 @@ async def start():
     # Initialize Pinecone index and store it in the user session
     pc = Pinecone(api_key=PINECONE_API_KEY)
     index = pc.Index(INDEX_NAME)
-    cl.user_session.set("pinecone_index", index)
+    cl.user_session.set("vector_index", index)
     
     # Send a welcome message
     await cl.Message(content="Hello! Ask me financial info about Apple or Nvidia.").send()
@@ -66,8 +67,8 @@ async def main(message: cl.Message):
     bm25 = cl.user_session.get("bm25")
     doc_map = cl.user_session.get("doc_map")
     vector_index = cl.user_session.get("vector_index")
-    embedding_model = cl.user_session.get("embedder")
-    reranker_model = cl.user_session.get("reranker")
+    embedding_model = cl.user_session.get("embedding_model")
+    reranker_model = cl.user_session.get("reranker_model")
     groq_client = cl.user_session.get("groq_client")
 
     # --- Step 1: Retrieval (Hybrid) ---
@@ -75,7 +76,8 @@ async def main(message: cl.Message):
         step.input = query
         
         # Vector Search (Pinecone)
-        query_embedding = embedding_model.encode(query).tolist()
+        with torch.no_grad(): # Disable gradient calculations to save memory during embedding
+            query_embedding = embedding_model.encode(query).tolist()
         vector_results = vector_index.query(
             vector=query_embedding, 
             top_k=20, 
@@ -100,7 +102,11 @@ async def main(message: cl.Message):
         pairs = [[query, doc['text']] for doc in retrieved_docs]
         
         # Get scores
-        scores = reranker_model.predict(pairs)
+        with torch.no_grad(): # Disable gradient calculations to save memory during reranking
+            scores = reranker_model.predict(pairs)
+            # If it returns a tensor, move to CPU immediately to save GPU memory
+            if isinstance(scores, torch.Tensor):
+                scores = scores.detach().cpu().numpy()
         for doc, score in zip(retrieved_docs, scores):
             doc['rerank_score'] = score
             
@@ -154,3 +160,8 @@ async def main(message: cl.Message):
     
     msg.elements = source_elements
     await msg.update()
+
+    # Cleanup to free memory
+    del pairs, scores, retrieved_docs
+    gc.collect()
+    torch.cuda.empty_cache()
