@@ -4,7 +4,7 @@
 
 FinSearch AI is a specialized Retrieval-Augmented Generation (RAG) system designed to answer financial queries using professional-grade open-source models. While standard RAG systems often struggle with the "noise" and structural complexity of financial data, this project implements a custom data-engineering pipeline to ensure high-fidelity retrieval and reasoning.
 
-The system is built to provide accurate, context-aware answers to financial queries from 10-K filings of different companies.
+The system currently achieves an accuracy rate of about 70% in providing context-aware answers derived from 10-K filings of different companies.
 
 ## 📜 Steps
 
