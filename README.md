@@ -40,7 +40,9 @@ Entering more into the details, the retrieval step consists in the following pip
 
 ## 🔎 Usage instructions
 
-I plan to host the application using an appropriate service soon. In the meantime, you can test it locally in the following way:
+You can test the system at the link https://huggingface.co/spaces/andreagalasso99/financial-rag-assistant.
+
+Alternatively, you can run it locally in the following way:
 
 ### Clone the repository 
 
