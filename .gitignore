@@ -12,3 +12,4 @@ Dockerfile
 .chainlit/
 .files
 notebook.ipynb
+.streamlit

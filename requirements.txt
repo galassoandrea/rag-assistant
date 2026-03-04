@@ -1,7 +1,7 @@
 tiktoken==0.7.0
 python-dotenv
 pinecone>=5.0.0
-chainlit
+streamlit
 sentence-transformers
 huggingface_hub
 beautifulsoup4
