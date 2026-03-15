@@ -12,7 +12,7 @@ import gc
 load_dotenv()
 
 # Configuration
-INDEX_NAME = "rag-assistant-v2"
+INDEX_NAME = "rag-assistant"
 EMBEDDING_MODEL = "BAAI/bge-m3"
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")

@@ -7,7 +7,7 @@ from utils import load_and_preprocess_docs
 load_dotenv()
 
 # Configuration
-INDEX_NAME = "rag-assistant-v2"
+INDEX_NAME = "rag-assistant"
 EMBEDDING_MODEL = "BAAI/bge-m3"
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 BATCH_SIZE = 32
@@ -53,13 +53,19 @@ def main():
             "values": embedding,
             "metadata": meta
         })
+    
+    # Upsert vectors to Pinecone in batches to avoid exceeding Pinecone limits
+    batch_size = 100
+    
+    for i in range(0, len(vectors_to_upsert), batch_size):
+        # Create a slice of the list for the current batch
+        batch = vectors_to_upsert[i : i + batch_size]
         
-    # Upsert to Pinecone
-    try:
-        index.upsert(vectors=vectors_to_upsert)
-        print(f"Upserted batch {j} to {j + len(chunks)}")
-    except Exception as e:
-        print(f"Error upserting batch: {e}")
+        try:
+            index.upsert(vectors=batch)
+            print(f"Successfully upserted: {i} to {i + len(batch)}")
+        except Exception as e:
+            print(f"Error upserting batch starting at index {i}: {e}")
 
     print("Database created and saved to Pinecone.")
 
