@@ -71,7 +71,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # User Input
-if query := st.chat_input("Ask about Apple or Nvidia financial info..."):
+if query := st.chat_input("Ask financial info about Apple, Nvidia, Microsoft, Google or Tesla..."):
     # Add user message to state and UI
     st.session_state.messages.append({"role": "user", "content": query})
     with st.chat_message("user"):
